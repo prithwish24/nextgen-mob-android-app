@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">ABC Rental</string>
+
+    <!-- Strings related to login -->
+    <string name="prompt_email">Username</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Login</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="error_invalid_email">This username/password is invalid</string>
+    <string name="error_invalid_password">Please enter your password</string>
+    <string name="error_incorrect_password">This username/password is incorrect</string>
+    <string name="error_field_required">Please enter your username</string>
+    <string name="permission_rationale">"Contacts permissions are needed for providing email
+        completions."
+    </string>
+    <string name="title_activity_home">ABC Home</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_main">MainActivity</string>
+</resources>
