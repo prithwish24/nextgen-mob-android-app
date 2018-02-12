@@ -18,7 +18,7 @@ package com.abc.product.app.ai;
 
 public abstract class Config {
     // copy this keys from your developer dashboard
-    public static final String ACCESS_TOKEN = "3485a96fb27744db83e78b8c4bc9e7b7";
+    public static final String ACCESS_TOKEN = "db04aaccc4b241bb98efc2bc2744478c";
 
     public static final LanguageConfig[] languages = new LanguageConfig[]{
             new LanguageConfig("en", "a11ea1d839e3446d84e402cb97cdadfb"),
