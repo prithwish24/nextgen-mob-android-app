@@ -1,4 +1,4 @@
-package com.abc.product.app.ai;
+package com.abc.product.app.util;
 
 import android.content.Context;
 import android.content.Intent;

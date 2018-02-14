@@ -1,10 +1,10 @@
 package com.abc.product.app.android;
 
-import android.nfc.tech.TagTechnology;
+import android.content.Context;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -19,24 +19,27 @@ import android.widget.Toast;
 
 import com.abc.R;
 import com.abc.product.app.ai.Config;
-import com.abc.product.app.ai.SessionManager;
+import com.abc.product.app.util.SessionManager;
 import com.abc.product.app.util.TTS;
 
-import ai.api.AIListener;
 import ai.api.android.AIConfiguration;
 import ai.api.model.AIError;
 import ai.api.model.AIResponse;
 import ai.api.model.Result;
 import ai.api.model.Status;
 import ai.api.ui.AIButton;
+//import ai.api.ui.AIDialog;
 
 public class HomeActivity extends BaseActivity
-        implements NavigationView.OnNavigationItemSelectedListener, AIButton.AIButtonListener {
+        implements NavigationView.OnNavigationItemSelectedListener,
+        AIButton.AIButtonListener, LocationListener {
 
     public static final String TAG = HomeActivity.class.getName();
 
     private SessionManager sessionManager;
+    private LocationManager locationManager;
     private AIButton aiButton;
+    //private AIDialog aiDialog;
     private TextView resultTextView;
 
     @Override
@@ -74,10 +77,18 @@ public class HomeActivity extends BaseActivity
         navPaneUserEmail.setText(sessionManager.getData(SessionManager.KEY_NAME));
 
 
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        try {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+        } catch(SecurityException se) {
+            Log.d("SecurityException", se.getMessage());
+        }
+
         aiButton = (AIButton) findViewById(R.id.micButton);
         resultTextView = (TextView) findViewById(R.id.resultTextView);
 
-        final AIConfiguration config = new AIConfiguration(Config.ACCESS_TOKEN,
+        final AIConfiguration config = new AIConfiguration(
+                "db04aaccc4b241bb98efc2bc2744478c",
                 AIConfiguration.SupportedLanguages.English,
                 AIConfiguration.RecognitionEngine.System);
 
@@ -87,6 +98,11 @@ public class HomeActivity extends BaseActivity
 
         aiButton.initialize(config);
         aiButton.setResultsListener(this);
+
+        //aiDialog = new AIDialog(this, config);
+        //aiDialog.setResultsListener(this);
+
+        TTS.speak("Hello! How may I help you ?");
 
     }
 
@@ -170,33 +186,6 @@ public class HomeActivity extends BaseActivity
     }
 
     @Override
-    public void onError(final AIError error) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Log.d(TAG, "onError");
-                /*Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show();*/
-                Toast.makeText(getApplicationContext(), error.getMessage(), Toast.LENGTH_LONG);
-                resultTextView.setText(error.getMessage());
-            }
-        });
-    }
-
-    @Override
-    public void onCancelled() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Log.d(TAG, "onCancelled");
-                Toast.makeText(getApplicationContext(), "Action Cancelled", Toast.LENGTH_SHORT);
-                resultTextView.setText("Action Cancelled !");
-            }
-        });
-    }
-
-
-    @Override
     protected void onPause() {
         super.onPause();
         aiButton.pause();
@@ -209,9 +198,55 @@ public class HomeActivity extends BaseActivity
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        aiButton.startListening();
+    public void onError(final AIError error) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(TAG, "onError");
+                /*Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();*/
+                Toast.makeText(getApplicationContext(), error.getMessage(), Toast.LENGTH_LONG).show();
+                resultTextView.setText(error.getMessage());
+            }
+        });
+    }
+
+    @Override
+    public void onCancelled() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(TAG, "onCancelled");
+                Toast.makeText(getApplicationContext(), "Action Cancelled", Toast.LENGTH_SHORT).show();
+                resultTextView.setText("Action Cancelled !");
+            }
+        });
+    }
+
+
+
+    // ------------------ Implements from LocationListner ------------------------
+
+    @Override
+    public void onLocationChanged(Location location) {
+        Toast.makeText(this, "Lat:"+ location.getLatitude()+", Long:"+location.getLongitude(),
+                Toast.LENGTH_SHORT).show();
+
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+
     }
 }
 
