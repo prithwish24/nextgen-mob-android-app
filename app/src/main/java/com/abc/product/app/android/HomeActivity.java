@@ -88,7 +88,7 @@ public class HomeActivity extends BaseActivity
         resultTextView = (TextView) findViewById(R.id.resultTextView);
 
         final AIConfiguration config = new AIConfiguration(
-                "db04aaccc4b241bb98efc2bc2744478c",
+                Config.ACCESS_TOKEN,
                 AIConfiguration.SupportedLanguages.English,
                 AIConfiguration.RecognitionEngine.System);
 
