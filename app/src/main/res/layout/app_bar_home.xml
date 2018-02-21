@@ -29,6 +29,8 @@
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:layout_above="@+id/bottom_container" />
 
+
+
     <RelativeLayout
         android:id="@+id/bottom_container"
         android:layout_width="fill_parent"
@@ -41,8 +43,7 @@
             android:layout_height="152dp"
             android:layout_centerHorizontal="true"
             android:layout_centerVertical="true"
-            style="@style/ApiAi.Microphone"
-            />
+            style="@style/ApiAi.Microphone" />
 
     </RelativeLayout>
     <!--<android.support.design.widget.FloatingActionButton
