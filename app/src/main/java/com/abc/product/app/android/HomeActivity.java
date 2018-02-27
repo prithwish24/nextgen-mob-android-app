@@ -7,8 +7,11 @@ import android.content.Intent;
 import android.location.Address;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -34,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import ai.api.PartialResultsListener;
 import ai.api.RequestExtras;
 import ai.api.android.AIConfiguration;
 import ai.api.android.GsonFactory;
@@ -57,6 +61,12 @@ public class HomeActivity extends BaseActivity
     private AIButton aiButton;
     //private AIDialog aiDialog;
     private TextView resultTextView;
+    private TextView partialResultsTextView;
+    private final Handler handler;
+
+    public HomeActivity() {
+        handler = new Handler(Looper.getMainLooper());
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,6 +127,7 @@ public class HomeActivity extends BaseActivity
 
         aiButton = findViewById(R.id.micButton);
         resultTextView = findViewById(R.id.resultTextView);
+        partialResultsTextView = findViewById(R.id.partialResultsTextView);
 
         final AIConfiguration config = new AIConfiguration(
                 Config.ACCESS_TOKEN,
@@ -150,6 +161,23 @@ public class HomeActivity extends BaseActivity
 
         TTS.speak(START_SPEECH);
         resultTextView.setText(START_SPEECH);
+
+        aiButton.setPartialResultsListener(new PartialResultsListener() {
+            @Override
+            public void onPartialResults(List<String> partialResults) {
+                final String result = partialResults.get(0);
+                if (!TextUtils.isEmpty(result)) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (partialResultsTextView != null) {
+                                partialResultsTextView.setText(result);
+                            }
+                        }
+                    });
+                }
+            }
+        });
     }
 
     @Override
@@ -189,7 +217,6 @@ public class HomeActivity extends BaseActivity
     @Override
     public void onResult(final AIResponse response) {
         runOnUiThread(new Runnable() {
-            @Override
             public void run() {
                 Log.i(TAG, "onResult");
                 Log.i(TAG, "Received success response");
@@ -210,24 +237,6 @@ public class HomeActivity extends BaseActivity
                 TTS.speak(speech);
             }
         });
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        aiButton.pause();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        aiButton.resume();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        aiButton.startListening();
     }
 
     @Override
@@ -256,6 +265,7 @@ public class HomeActivity extends BaseActivity
             }
         });
     }
+
 
 }
 
