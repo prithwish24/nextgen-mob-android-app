@@ -4,15 +4,15 @@ android {
     compileSdkVersion 26
     defaultConfig {
         applicationId "com.abc"
-        minSdkVersion 22
-        targetSdkVersion 26
+        minSdkVersion 23
+        targetSdkVersion 25
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }

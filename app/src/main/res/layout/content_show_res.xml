@@ -5,19 +5,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context=".product.app.android.HomeActivity"
-    tools:showIn="@layout/app_bar_home">
+    tools:context="com.abc.product.app.android.ShowResActivity"
+    tools:showIn="@layout/app_bar_show_res">
 
-    <TextView
+
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
-        android:id="@+id/resultTextView"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Some sample text"/>
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:id="@+id/layoutShowRes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
 
 
+    </ScrollView>
 </android.support.constraint.ConstraintLayout>

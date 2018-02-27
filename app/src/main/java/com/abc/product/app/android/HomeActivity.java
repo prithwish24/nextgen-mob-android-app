@@ -49,21 +49,20 @@ public class HomeActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         AIButton.AIButtonListener {
     public static final String TAG = HomeActivity.class.getName();
+    public static final String START_SPEECH = "Hi! how may I help you ?";
 
-    private SessionManager sessionManager;
+
     private Gson gson = GsonFactory.getGson();
 
     private AIButton aiButton;
     //private AIDialog aiDialog;
     private TextView resultTextView;
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-        sessionManager = new SessionManager(getApplicationContext());
+
         sessionManager.checkLogin();
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -75,61 +74,14 @@ public class HomeActivity extends BaseActivity
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
+        showUserDetailsOnDrawer(this);
 
-        final View headerView = navigationView.getHeaderView(0);
-        final TextView navPaneUserFullName = headerView.findViewById(R.id.userFullName);
-        final TextView navPaneUserEmail = headerView.findViewById(R.id.userEmail);
-        navPaneUserFullName.setText(sessionManager.getData(SessionManager.KEY_NAME));
-        navPaneUserEmail.setText(sessionManager.getData(SessionManager.KEY_NAME));
-
-
-        ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, 123);
-        GPSTracker gpsTracker = new GPSTracker(getApplicationContext());
-        final Location location = gpsTracker.getLocation();
-        final Address address = gpsTracker.getAddress(location.getLatitude(), location.getLongitude());
-
-
-        aiButton = findViewById(R.id.micButton);
-        resultTextView = findViewById(R.id.resultTextView);
-
-        final AIConfiguration config = new AIConfiguration(
-                Config.ACCESS_TOKEN,
-                AIConfiguration.SupportedLanguages.English,
-                AIConfiguration.RecognitionEngine.System);
-
-        config.setRecognizerStartSound(getResources().openRawResourceFd(R.raw.test_start));
-        config.setRecognizerStopSound(getResources().openRawResourceFd(R.raw.test_stop));
-        config.setRecognizerCancelSound(getResources().openRawResourceFd(R.raw.test_cancel));
-
-
-        //aiButton.initialize(config);
-        //aiButton.setResultsListener(this);
-        if (address != null) {
-            final AIContext aiContext = new AIContext("CarRental");
-            final Map<String, String> maps = new HashMap<>(1);
-            maps.put("address", address.getPostalCode());
-            aiContext.setParameters(maps);
-            aiContext.setLifespan(2);
-            final List<AIContext> contexts = Collections.singletonList(aiContext);
-            final RequestExtras requestExtras = new RequestExtras(contexts, null);
-            //final AIService aiService = aiButton.getAIService();
-            //aiService.startListening(requestExtras);
-            aiButton.initialize(config);
-            //aiButton.setResultsListener(this);
-            aiButton.startListening(requestExtras);
-
-        } else {
-            aiButton.initialize(config);
-            aiButton.setResultsListener(this);
-        }
-
-
-        //aiDialog = new AIDialog(this, config);
-        //aiDialog.setResultsListener(this);
-
-        TTS.speak("Hi! How may I help you ?");
+        requestAppPermissions(new String[] {
+                    Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.BLUETOOTH, Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.READ_CONTACTS
+                },
+                R.string.permission_rationale_text, 20);
 
     }
 
@@ -156,6 +108,51 @@ public class HomeActivity extends BaseActivity
     }*/
 
     @Override
+    public void onPermissionsGranted(int requestCode) {
+        Toast.makeText(this, "Permissions Received.", Toast.LENGTH_LONG).show();
+
+        GPSTracker gpsTracker = new GPSTracker(getApplicationContext());
+        final Location location = gpsTracker.getLocation();
+        final Address address = gpsTracker.getAddress(location.getLatitude(), location.getLongitude());
+
+        aiButton = findViewById(R.id.micButton);
+        resultTextView = findViewById(R.id.resultTextView);
+
+        final AIConfiguration config = new AIConfiguration(
+                Config.ACCESS_TOKEN,
+                AIConfiguration.SupportedLanguages.English,
+                AIConfiguration.RecognitionEngine.System);
+
+        config.setRecognizerStartSound(getResources().openRawResourceFd(R.raw.test_start));
+        config.setRecognizerStopSound(getResources().openRawResourceFd(R.raw.test_stop));
+        config.setRecognizerCancelSound(getResources().openRawResourceFd(R.raw.test_cancel));
+
+        aiButton.initialize(config);
+        aiButton.setResultsListener(this);
+
+        if (address != null) {
+            final AIContext aiContext = new AIContext("CarRental");
+            final Map<String, String> maps = new HashMap<>(1);
+            maps.put("address", address.getPostalCode());
+            aiContext.setParameters(maps);
+            //aiContext.setLifespan(2);
+            final List<AIContext> contexts = Collections.singletonList(aiContext);
+            final RequestExtras requestExtras = new RequestExtras(contexts, null);
+            //final AIService aiService = aiButton.getAIService();
+            //aiService.startListening(requestExtras);
+
+            //aiButton.setResultsListener(this);
+            aiButton.startListening(requestExtras);
+        }
+
+        //aiDialog = new AIDialog(this, config);
+        //aiDialog.setResultsListener(this);
+
+        TTS.speak(START_SPEECH);
+        resultTextView.setText(START_SPEECH);
+    }
+
+    @Override
     public void onBackPressed() {
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
@@ -169,6 +166,7 @@ public class HomeActivity extends BaseActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.home, menu);
+        //menu.getItem(R.id.nav_home).setVisible(false);
         return true;
     }
 
@@ -177,13 +175,6 @@ public class HomeActivity extends BaseActivity
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -192,22 +183,7 @@ public class HomeActivity extends BaseActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         sessionManager.checkLogin();
 
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
-
-        if (id == R.id.nav_logout) {
-            sessionManager.logoutUser();
-        } else if (id == R.id.nav_change_passwd) {
-            Toast.makeText(this, "Nothing assigned", Toast.LENGTH_SHORT).show();
-        } else if (id == R.id.nav_list_res) {
-            Toast.makeText(this, "Nothing assigned", Toast.LENGTH_SHORT).show();
-        } else if (id == R.id.nav_update_profile) {
-            Toast.makeText(this, "Nothing assigned", Toast.LENGTH_SHORT).show();
-        }
-
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
+        return super.actionOnDrawerItems(item);
     }
 
     @Override
@@ -218,8 +194,7 @@ public class HomeActivity extends BaseActivity
                 Log.i(TAG, "onResult");
                 Log.i(TAG, "Received success response");
 
-                final TextView resulttext = findViewById(R.id.resultTextView);
-                resulttext.setText(gson.toJson(response));
+                resultTextView.setText(gson.toJson(response));
 
                 // this is example how to get different parts of result object
                 final Status status = response.getStatus();
@@ -250,6 +225,12 @@ public class HomeActivity extends BaseActivity
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        aiButton.startListening();
+    }
+
+    @Override
     public void onError(final AIError error) {
         runOnUiThread(new Runnable() {
             @Override
@@ -258,6 +239,7 @@ public class HomeActivity extends BaseActivity
                 /*Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();*/
                 Toast.makeText(getApplicationContext(), error.getMessage(), Toast.LENGTH_LONG).show();
+
                 resultTextView.setText(error.getMessage());
             }
         });

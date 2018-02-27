@@ -130,7 +130,7 @@ public class LoginActivity extends BaseActivity implements LoaderCallbacks<Curso
     /**
      * Callback received when a permissions request has been completed.
      */
-    @Override
+    /*@Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         if (requestCode == REQUEST_READ_CONTACTS) {
@@ -138,6 +138,11 @@ public class LoginActivity extends BaseActivity implements LoaderCallbacks<Curso
                 populateAutoComplete();
             }
         }
+    }*/
+
+    @Override
+    public void onPermissionsGranted(int requestCode) {
+        populateAutoComplete();
     }
 
 
@@ -342,7 +347,6 @@ public class LoginActivity extends BaseActivity implements LoaderCallbacks<Curso
                 // open home activity
                 Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
                 startActivity(intent);
-
 
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));

@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Created by prith on 2/18/2018.
+ * Created by Prithwish on 2/18/2018.
  */
 
 public class GPSTracker implements LocationListener {
@@ -38,19 +38,18 @@ public class GPSTracker implements LocationListener {
         this.context = context;
     }
 
-    public Location getLocation() {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+    public Location getLocation() throws SecurityException {
+        /*if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(context, "Permission Refused by user !", Toast.LENGTH_SHORT).show();
             return null;
-        }
+        }*/
         final LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         if (isGPSEnabled) {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME_FOR_UPDATE, MIN_DISTANCE_FOR_UPDATE, this);
-            final Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            return location;
+            return locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         } else {
-            showSettingsDialog();;
+            showSettingsDialog();
         }
         return null;
     }

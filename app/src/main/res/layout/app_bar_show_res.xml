@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".product.app.android.HomeActivity">
+    tools:context="com.abc.product.app.android.ShowResActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -20,23 +20,8 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <include layout="@layout/content_home" />
+    <include layout="@layout/content_show_res" />
 
-    <RelativeLayout
-        android:id="@+id/bottom_container"
-        android:layout_width="fill_parent"
-        android:layout_height="200dp"
-        android:layout_gravity="bottom|end"
-        android:layout_alignParentBottom="true">
-
-        <ai.api.ui.AIButton
-            android:id="@+id/micButton"
-            android:layout_height="152dp"
-            android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"
-            style="@style/ApiAi.Microphone" />
-
-    </RelativeLayout>
     <!--<android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"
         android:layout_width="wrap_content"
