@@ -112,14 +112,21 @@ public class HomeActivity extends BaseActivity
         partialResultsTextView = findViewById(R.id.partialResultsTextView);
 
         final SharedPreferences defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        final String key = defaultSharedPreferences.getString("dialogflow_agent_token", "");
-        Toast.makeText(this, key, Toast.LENGTH_SHORT).show();
+        final String accessToken = defaultSharedPreferences.getString("dialogflow_agent_token", "");
+        //Toast.makeText(this, key, Toast.LENGTH_SHORT).show();
 
-        final AIConfiguration config = new AIConfiguration(
-                Config.ACCESS_TOKEN,
-                AIConfiguration.SupportedLanguages.English,
-                AIConfiguration.RecognitionEngine.System);
-
+        AIConfiguration config = null;
+        if (accessToken != null && !accessToken.trim().isEmpty()) {
+            config = new AIConfiguration(
+                    Config.ACCESS_TOKEN,
+                    AIConfiguration.SupportedLanguages.English,
+                    AIConfiguration.RecognitionEngine.System);
+        } else {
+            config = new AIConfiguration(
+                    Config.ACCESS_TOKEN,
+                    AIConfiguration.SupportedLanguages.English,
+                    AIConfiguration.RecognitionEngine.System);
+        }
         config.setRecognizerStartSound(getResources().openRawResourceFd(R.raw.test_start));
         config.setRecognizerStopSound(getResources().openRawResourceFd(R.raw.test_stop));
         config.setRecognizerCancelSound(getResources().openRawResourceFd(R.raw.test_cancel));
@@ -183,7 +190,7 @@ public class HomeActivity extends BaseActivity
                     case RESULT_CANCELED:
                         Log.e("Settings", "Result Cancel");
                         //updateGPSStatus("GPS is Disabled in your device");
-                        Toast.makeText(this, "Location Permission denied.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "GPS is Disabled in your device.", Toast.LENGTH_SHORT).show();
                         break;
                 }
                 break;
@@ -222,12 +229,11 @@ public class HomeActivity extends BaseActivity
         return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         sessionManager.checkLogin();
 
-        return super.actionOnDrawerItems(item);
+        return actionOnDrawerItems(item);
     }
 
     @Override

@@ -115,14 +115,18 @@ public abstract class BaseActivity extends AppCompatActivity {
         if (id == R.id.nav_logout) {
             sessionManager.logoutUser();
 
+
         } else if (id == R.id.nav_home) {
             startActivity(new Intent(this, HomeActivity.class));
+            finish();
 
         } else if (id == R.id.nav_list_res) {
             startActivity(new Intent(this, ShowResActivity.class));
+            finish();
 
         } else if (id == R.id.nav_manage) {
             startActivity(new Intent(this, SettingsActivity.class));
+            finish();
 
         } else if (id == R.id.nav_show_profile) {
             Toast.makeText(this, "Nothing assigned", Toast.LENGTH_SHORT).show();

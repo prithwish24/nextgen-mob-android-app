@@ -82,7 +82,7 @@ public class ShowResActivity extends BaseActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.show_res, menu);
+        getMenuInflater().inflate(R.menu.home, menu);
         //menu.getItem(R.id.nav_list_res).setVisible(false);
         return true;
     }
@@ -95,12 +95,11 @@ public class ShowResActivity extends BaseActivity
         return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         // Handle navigation view item clicks here.
         sessionManager.checkLogin();
 
-        return super.actionOnDrawerItems(item);
+        return actionOnDrawerItems(item);
     }
 }

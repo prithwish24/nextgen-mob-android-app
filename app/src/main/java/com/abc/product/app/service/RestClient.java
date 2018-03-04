@@ -29,6 +29,7 @@ public enum RestClient {
     private final String TAG = RestClient.class.getName();
     private final int DEFAULT_SERVICE_TIMEOUT = 30 * 1000;
     private final RestTemplate restTemplate;
+    private final ObjectMapper mapper;
 
     RestClient() {
         restTemplate = new RestTemplate();
@@ -42,6 +43,8 @@ public enum RestClient {
                 super.setReadTimeout(DEFAULT_SERVICE_TIMEOUT);
             }
         });
+
+        mapper = new ObjectMapper();
     }
 
     private BaseResponse makeRequestWithFormData(String url, MultiValueMap<String, String> formData, HttpMethod method) {
@@ -59,9 +62,8 @@ public enum RestClient {
         Log.d(TAG,"In RestServiceClient.getRequestForm ::");
         BaseResponse br = makeRequestWithFormData (url, formData, HttpMethod.GET);
         if (br.isSuccess()) {
-            final Object resp = br.getResponse();
-            String temp = new ObjectMapper().writeValueAsString(br.getResponse());
-            T type = new ObjectMapper().readValue(temp, clazz);
+            String temp = mapper.writeValueAsString(br.getResponse());
+            T type = mapper.readValue(temp, clazz);
             br.setResponse(type);
         }
         return br;
@@ -70,9 +72,8 @@ public enum RestClient {
         Log.d(TAG,"In RestServiceClient.postRequestForm ::");
         BaseResponse br = makeRequestWithFormData (url, formData, HttpMethod.POST);
         if (br.isSuccess()) {
-            final Object resp = br.getResponse();
-            String temp = new ObjectMapper().writeValueAsString(br.getResponse());
-            T type = new ObjectMapper().readValue(temp, clazz);
+            String temp = mapper.writeValueAsString(br.getResponse());
+            T type = mapper.readValue(temp, clazz);
             br.setResponse(type);
         }
         return br;
