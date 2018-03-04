@@ -36,6 +36,7 @@ import android.util.SparseArray;
 import android.util.SparseIntArray;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -101,6 +102,10 @@ public abstract class BaseActivity extends AppCompatActivity {
         final TextView navPaneUserEmail = headerView.findViewById(R.id.userEmail);
         navPaneUserFullName.setText(sessionManager.getData(SessionManager.KEY_NAME));
         navPaneUserEmail.setText(sessionManager.getData(SessionManager.KEY_EMAIL));
+
+        final ImageView profileImgView = headerView.findViewById(R.id.profileImageView);
+        profileImgView.setImageResource(R.mipmap.ic_profile);
+
     }
 
     protected boolean actionOnDrawerItems(MenuItem item) {
@@ -111,13 +116,13 @@ public abstract class BaseActivity extends AppCompatActivity {
             sessionManager.logoutUser();
 
         } else if (id == R.id.nav_home) {
-            Intent intent = new Intent(this, HomeActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(this, HomeActivity.class));
 
         } else if (id == R.id.nav_list_res) {
-            //Toast.makeText(this, "Nothing assigned", Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent(this, ShowResActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(this, ShowResActivity.class));
+
+        } else if (id == R.id.nav_manage) {
+            startActivity(new Intent(this, SettingsActivity.class));
 
         } else if (id == R.id.nav_show_profile) {
             Toast.makeText(this, "Nothing assigned", Toast.LENGTH_SHORT).show();

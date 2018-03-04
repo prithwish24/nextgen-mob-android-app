@@ -4,11 +4,13 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Address;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.text.TextUtils;
@@ -37,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import ai.api.AIListener;
 import ai.api.PartialResultsListener;
 import ai.api.RequestExtras;
 import ai.api.android.AIConfiguration;
@@ -47,7 +50,6 @@ import ai.api.model.AIResponse;
 import ai.api.model.Result;
 import ai.api.model.Status;
 import ai.api.ui.AIButton;
-//import ai.api.ui.AIDialog;
 
 public class HomeActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener,
@@ -55,11 +57,13 @@ public class HomeActivity extends BaseActivity
     public static final String TAG = HomeActivity.class.getName();
     public static final String START_SPEECH = "Hi! how may I help you ?";
 
+    private DrawerLayout drawerLayout;
+    private ActionBarDrawerToggle drawerToggle;
 
     private Gson gson = GsonFactory.getGson();
 
     private AIButton aiButton;
-    //private AIDialog aiDialog;
+    private Address curentLocationAddress;
     private TextView resultTextView;
     private TextView partialResultsTextView;
     private final Handler handler;
@@ -77,12 +81,14 @@ public class HomeActivity extends BaseActivity
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        drawerLayout = findViewById(R.id.drawer_layout);
+        drawerToggle = new ActionBarDrawerToggle(this,
+                drawerLayout, toolbar,
+                R.string.navigation_drawer_open,
+                R.string.navigation_drawer_close);
+        drawerLayout.addDrawerListener(drawerToggle);
+        drawerToggle.syncState();
 
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
-        toggle.syncState();
 
         showUserDetailsOnDrawer(this);
 
@@ -91,43 +97,23 @@ public class HomeActivity extends BaseActivity
                     Manifest.permission.BLUETOOTH, Manifest.permission.RECORD_AUDIO,
                     Manifest.permission.READ_CONTACTS
                 },
-                R.string.permission_rationale_text, 20);
+                R.string.permission_rationale_text, this.getTaskId());
+
+        resolveCurrentGPSLocation();
 
     }
-
-    /*private void showSettingsDialog() {
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(
-                HomeActivity.this);
-        alertDialog.setTitle("SETTINGS");
-        alertDialog.setMessage("Enable Location Provider! Go to settings menu?");
-        alertDialog.setPositiveButton("Settings",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent(
-                                Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                        HomeActivity.this.startActivity(intent);
-                    }
-                });
-        alertDialog.setNegativeButton("Cancel",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                });
-        alertDialog.show();
-    }*/
 
     @Override
     public void onPermissionsGranted(int requestCode) {
         Toast.makeText(this, "Permissions Received.", Toast.LENGTH_LONG).show();
 
-        GPSTracker gpsTracker = new GPSTracker(getApplicationContext());
-        final Location location = gpsTracker.getLocation();
-        final Address address = gpsTracker.getAddress(location.getLatitude(), location.getLongitude());
-
         aiButton = findViewById(R.id.micButton);
         resultTextView = findViewById(R.id.resultTextView);
         partialResultsTextView = findViewById(R.id.partialResultsTextView);
+
+        final SharedPreferences defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        final String key = defaultSharedPreferences.getString("dialogflow_agent_token", "");
+        Toast.makeText(this, key, Toast.LENGTH_SHORT).show();
 
         final AIConfiguration config = new AIConfiguration(
                 Config.ACCESS_TOKEN,
@@ -140,24 +126,6 @@ public class HomeActivity extends BaseActivity
 
         aiButton.initialize(config);
         aiButton.setResultsListener(this);
-
-        if (address != null) {
-            final AIContext aiContext = new AIContext("CarRental");
-            final Map<String, String> maps = new HashMap<>(1);
-            maps.put("address", address.getPostalCode());
-            aiContext.setParameters(maps);
-            //aiContext.setLifespan(2);
-            final List<AIContext> contexts = Collections.singletonList(aiContext);
-            final RequestExtras requestExtras = new RequestExtras(contexts, null);
-            //final AIService aiService = aiButton.getAIService();
-            //aiService.startListening(requestExtras);
-
-            //aiButton.setResultsListener(this);
-            aiButton.startListening(requestExtras);
-        }
-
-        //aiDialog = new AIDialog(this, config);
-        //aiDialog.setResultsListener(this);
 
         TTS.speak(START_SPEECH);
         resultTextView.setText(START_SPEECH);
@@ -178,6 +146,48 @@ public class HomeActivity extends BaseActivity
                 }
             }
         });
+
+
+        /*final AIContext aiContext = new AIContext("CarRental");
+        final Map<String, String> maps = new HashMap<>(1);
+        maps.put("zipcode", curentLocationAddress.getPostalCode());
+        aiContext.setParameters(maps);
+        final List<AIContext> contexts = Collections.singletonList(aiContext);
+        final RequestExtras requestExtras = new RequestExtras(contexts, null);
+        aiButton.startListening(requestExtras);*/
+    }
+
+
+    private void resolveCurrentGPSLocation() {
+        GPSTracker gpsTracker = new GPSTracker(this);
+        final Location location = gpsTracker.getLocation();
+        if (gpsTracker.isGPSServiceOn() && (location != null) ) {
+            this.curentLocationAddress = gpsTracker.getAddress(location);
+        } else {
+            gpsTracker.tryEnablingGPS(); // response will be displayed on onActivityResult method
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            // Check for the integer request code originally supplied to startResolutionForResult().
+            case GPSTracker.REQUEST_CHECK_SETTINGS:
+                switch (resultCode) {
+                    case RESULT_OK:
+                        Log.e("Settings", "Result OK");
+                        //updateGPSStatus("GPS is Enabled in your device");
+                        resolveCurrentGPSLocation();
+                        break;
+                    case RESULT_CANCELED:
+                        Log.e("Settings", "Result Cancel");
+                        //updateGPSStatus("GPS is Disabled in your device");
+                        Toast.makeText(this, "Location Permission denied.", Toast.LENGTH_SHORT).show();
+                        break;
+                }
+                break;
+        }
     }
 
     @Override
@@ -203,6 +213,12 @@ public class HomeActivity extends BaseActivity
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 

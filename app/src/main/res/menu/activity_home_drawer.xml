@@ -3,13 +3,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
-    <group android:checkableBehavior="single">
+    <group android:checkableBehavior="single" android:id="@+id/group1">
         <item
             android:id="@+id/nav_home"
-            android:title="Home" />
+            android:icon="@drawable/ic_menu_home"
+            android:title="@string/menu_title_home" />
         <item
             android:id="@+id/nav_list_res"
-            android:title="Reservations" />
+            android:icon="@drawable/ic_menu_reservation"
+            android:title="@string/menu_title_reservation" />
 
         <!--<item
             android:id="@+id/nav_camera"
@@ -22,34 +24,27 @@
         <item
             android:id="@+id/nav_slideshow"
             android:icon="@drawable/ic_menu_slideshow"
-            android:title="Slideshow" />
+            android:title="Slideshow" />-->
         <item
             android:id="@+id/nav_manage"
             android:icon="@drawable/ic_menu_manage"
-            android:title="Tools" />-->
+            android:title="@string/menu_title_manage" />
     </group>
 
-    <group android:checkableBehavior="single">
+    <group android:checkableBehavior="single" android:id="@+id/group2">
         <item
             android:id="@+id/nav_show_profile"
-            android:title="Profile" />
+            android:icon="@drawable/ic_menu_profile"
+            android:title="@string/menu_title_profile" />
         <item
             android:id="@+id/nav_logout"
-            android:title="Sign out" />
+            android:icon="@drawable/ic_menu_exit"
+            android:title="@string/menu_title_exit" />
     </group>
 
     <!--<item android:title="">
         <menu>
             <item
-                android:id="@+id/nav_update_profile"
-                android:title="Update Profile" />
-            <item
-                android:id="@+id/nav_change_passwd"
-                android:title="Change Password" />
-            <item
-                android:id="@+id/nav_logout"
-                android:title="Sign out" />
-            &lt;!&ndash;<item
                 android:id="@+id/nav_share"
                 android:icon="@drawable/ic_menu_share"
                 android:title="Share" />

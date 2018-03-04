@@ -3,8 +3,11 @@ package com.abc.product.app.android;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.app.LoaderManager.LoaderCallbacks;
@@ -19,10 +22,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
@@ -30,10 +35,19 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.abc.R;
+import com.abc.product.app.bo.BaseResponse;
+import com.abc.product.app.bo.UserProfile;
+import com.abc.product.app.service.RestClient;
 import com.abc.product.app.util.SessionManager;
 
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
@@ -41,6 +55,7 @@ import static android.Manifest.permission.READ_CONTACTS;
  * A login screen that offers login via email/password.
  */
 public class LoginActivity extends BaseActivity implements LoaderCallbacks<Cursor> {
+    private static final String TAG = LoginActivity.class.getName();
 
     /**
      * Id to identity READ_CONTACTS permission request.
@@ -95,6 +110,7 @@ public class LoginActivity extends BaseActivity implements LoaderCallbacks<Curso
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+
     }
 
     private void populateAutoComplete() {
@@ -126,19 +142,6 @@ public class LoginActivity extends BaseActivity implements LoaderCallbacks<Curso
         }
         return false;
     }
-
-    /**
-     * Callback received when a permissions request has been completed.
-     */
-    /*@Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        if (requestCode == REQUEST_READ_CONTACTS) {
-            if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                populateAutoComplete();
-            }
-        }
-    }*/
 
     @Override
     public void onPermissionsGranted(int requestCode) {
@@ -302,8 +305,7 @@ public class LoginActivity extends BaseActivity implements LoaderCallbacks<Curso
      * Represents an asynchronous login/registration task used to authenticate
      * the user.
      */
-    public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
-
+    public class UserLoginTask extends AsyncTask<Void, Void, BaseResponse<UserProfile>> {
         private final String mEmail;
         private final String mPassword;
 
@@ -313,47 +315,67 @@ public class LoginActivity extends BaseActivity implements LoaderCallbacks<Curso
         }
 
         @Override
-        protected Boolean doInBackground(Void... params) {
-            // TODO: attempt authentication against a network service.
+        protected BaseResponse<UserProfile> doInBackground(Void... params) {
+            final SharedPreferences defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(LoginActivity.this);
+            boolean useLoginService = defaultSharedPreferences.getBoolean("external_service_switch", false);
+            String loginServiceURL = defaultSharedPreferences.getString("service_login_url", "");
 
-            try {
-                // Simulate network access.
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                return false;
-            }
+            BaseResponse<UserProfile> response = null;
+            if (useLoginService) {
 
-            for (String credential : DUMMY_CREDENTIALS) {
-                String[] pieces = credential.split(":");
-                if (pieces[0].equals(mEmail)) {
-                    // Account exists, return true if the password matches.
-                    return pieces[1].equals(mPassword);
+                MultiValueMap<String, String> data = new LinkedMultiValueMap<>(2);
+                data.add("username", mEmail);
+                data.add("password", mPassword);
+                try {
+                    response = RestClient.INSTANCE.postRequest(loginServiceURL, data, UserProfile.class);
+                } catch (Exception e) {
+                    Log.e(TAG, "Login Service call failed!", e);
+                }
+
+            } else {
+
+                for (String credential : DUMMY_CREDENTIALS) {
+                    String[] pieces = credential.split(":");
+                    if (pieces[0].equals(mEmail) && pieces[1].equals(mPassword)) {
+                        UserProfile up = new UserProfile("Administrator", mEmail+"@example.com");
+                        response = new BaseResponse<>();
+                        response.setSuccess(true);
+                        response.setResponse(up);
+                    }
                 }
             }
 
-            // TODO: register the new account here.
-            return true;
+            return response;
         }
 
         @Override
-        protected void onPostExecute(final Boolean success) {
+        protected void onPostExecute(final BaseResponse<UserProfile> response) {
             mAuthTask = null;
+
+            boolean success = (response != null) && response.isSuccess();
             if (success) {
-                //finish();
                 //set session data
+                UserProfile profile = response.getResponse();
+
                 SessionManager sessionManager = new SessionManager(getApplicationContext());
-                sessionManager.createLoginSession(mEmail, "somedummy@email.com");
+                sessionManager.createLoginSession(profile.getFullName(), profile.getEmailId());
+
+                showProgress(false);
 
                 // open home activity
                 Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
                 startActivity(intent);
 
+                finish();
+
             } else {
+
+                showProgress(false);
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
                 mPasswordView.requestFocus();
             }
 
-            showProgress(false);
+
         }
 
         @Override
