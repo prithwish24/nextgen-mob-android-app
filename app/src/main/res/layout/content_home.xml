@@ -13,23 +13,77 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:textAppearance="?android:attr/textAppearanceLarge"
         android:layout_marginBottom="15dp"
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"
-        android:gravity="center" />
+        android:gravity="center"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
 
     <TextView
+        android:id="@+id/resultTextView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_below="@+id/partialResultsTextView"
+        android:paddingBottom="10dp"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
         android:paddingTop="10dp"
-        android:paddingBottom="10dp"
-        android:id="@+id/resultTextView"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:layout_below="@+id/partialResultsTextView"
-        android:text="Some sample text"/>
+        android:text="Some sample text"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <ListView
+
+        android:id="@+id/messagesContainer"
+
+        android:layout_width="match_parent"
+
+        android:layout_height="match_parent"
+
+        android:layout_alignParentLeft="false"
+
+        android:layout_alignParentTop="false"
+
+        android:layout_below="@+id/meLbl"
+
+        android:layout_marginBottom="20dp"
+
+        android:layout_marginTop="10dp"
+
+        android:divider="@null"
+
+        android:listSelector="@android:color/transparent"
+
+        android:transcriptMode="alwaysScroll" />
+
+    <TextView
+
+        android:id="@+id/meLbl"
+
+        android:layout_width="wrap_content"
+
+        android:layout_height="wrap_content"
+
+        android:layout_gravity="left|center_vertical"
+
+        android:singleLine="false"
+
+        android:text="MySelf"
+
+        android:textSize="20dp" />
+
+    <TextView
+
+        android:id="@+id/friendLabel"
+
+        android:layout_width="wrap_content"
+
+        android:layout_height="wrap_content"
+
+        android:layout_alignParentRight="true"
+
+        android:text="Friend"
+
+        android:textSize="20dp" />
 
 
 </android.support.constraint.ConstraintLayout>

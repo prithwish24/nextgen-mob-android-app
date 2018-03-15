@@ -24,17 +24,23 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.abc.R;
+import com.abc.product.app.adapter.ChatAdapter;
 import com.abc.product.app.ai.Config;
+import com.abc.product.app.model.ChatMessage;
 import com.abc.product.app.util.GPSTracker;
 import com.abc.product.app.util.SessionManager;
 import com.abc.product.app.util.TTS;
 import com.google.gson.Gson;
 
+import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +73,9 @@ public class HomeActivity extends BaseActivity
     private TextView resultTextView;
     private TextView partialResultsTextView;
     private final Handler handler;
+    private ArrayList<ChatMessage> chatHistory;
+    private ListView messagesContainer;
+    private ChatAdapter adapter;
 
     public HomeActivity() {
         handler = new Handler(Looper.getMainLooper());
@@ -78,6 +87,8 @@ public class HomeActivity extends BaseActivity
         setContentView(R.layout.activity_home);
 
         sessionManager.checkLogin();
+
+        messagesContainer = (ListView) findViewById(R.id.messagesContainer);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -100,6 +111,8 @@ public class HomeActivity extends BaseActivity
                 R.string.permission_rationale_text, this.getTaskId());
 
         resolveCurrentGPSLocation();
+        adapter = new ChatAdapter(HomeActivity.this, new ArrayList<ChatMessage>());
+        messagesContainer.setAdapter(adapter);
 
     }
 
@@ -154,6 +167,26 @@ public class HomeActivity extends BaseActivity
             }
         });
 
+        aiButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String messageText = messageET.getText().toString();
+                if (TextUtils.isEmpty(messageText)) {
+                    return;
+                }
+
+                ChatMessage chatMessage = new ChatMessage();
+                chatMessage.setId(122);//dummy
+                chatMessage.setMessage(messageText);
+                chatMessage.setDate(DateFormat.getDateTimeInstance().format(new Date()));
+                chatMessage.setMe(true);
+
+                messageET.setText("");
+
+                displayMessage(chatMessage);
+            }
+        });
+
 
         /*final AIContext aiContext = new AIContext("CarRental");
         final Map<String, String> maps = new HashMap<>(1);
@@ -162,6 +195,12 @@ public class HomeActivity extends BaseActivity
         final List<AIContext> contexts = Collections.singletonList(aiContext);
         final RequestExtras requestExtras = new RequestExtras(contexts, null);
         aiButton.startListening(requestExtras);*/
+    }
+
+    public void displayMessage(ChatMessage message) {
+        adapter.add(message);
+        adapter.notifyDataSetChanged();
+        messagesContainer.setSelection(messagesContainer.getCount() - 1);
     }
 
 
@@ -243,7 +282,7 @@ public class HomeActivity extends BaseActivity
                 Log.i(TAG, "onResult");
                 Log.i(TAG, "Received success response");
 
-                resultTextView.setText(gson.toJson(response));
+                //resultTextView.setText(gson.toJson(response));
 
                 // this is example how to get different parts of result object
                 final Status status = response.getStatus();
@@ -255,7 +294,16 @@ public class HomeActivity extends BaseActivity
 
                 Log.i(TAG, "Action: " + result.getAction());
                 final String speech = result.getFulfillment().getSpeech();
+                resultTextView.setText(speech);
                 Log.i(TAG, "Speech: " + speech);
+
+                ChatMessage chatMessage = new ChatMessage();
+                chatMessage.setId(122);//dummy
+                chatMessage.setMessage(speech);
+                chatMessage.setDate(DateFormat.getDateTimeInstance().format(new Date()));
+                chatMessage.setMe(false);
+
+                displayMessage(chatMessage);
                 TTS.speak(speech);
             }
         });
