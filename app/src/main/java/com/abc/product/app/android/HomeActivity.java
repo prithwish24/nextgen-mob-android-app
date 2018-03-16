@@ -121,8 +121,8 @@ public class HomeActivity extends BaseActivity
         Toast.makeText(this, "Permissions Received.", Toast.LENGTH_LONG).show();
 
         aiButton = findViewById(R.id.micButton);
-        resultTextView = findViewById(R.id.resultTextView);
-        partialResultsTextView = findViewById(R.id.partialResultsTextView);
+        //resultTextView = findViewById(R.id.resultTextView);
+        //partialResultsTextView = findViewById(R.id.partialResultsTextView);
 
         final SharedPreferences defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         final String accessToken = defaultSharedPreferences.getString("dialogflow_agent_token", "");
@@ -148,9 +148,10 @@ public class HomeActivity extends BaseActivity
         aiButton.setResultsListener(this);
 
         TTS.speak(START_SPEECH);
-        resultTextView.setText(START_SPEECH);
+        //resultTextView.setText(START_SPEECH);
 
         aiButton.setPartialResultsListener(new PartialResultsListener() {
+            ChatMessage chatMessage = new ChatMessage();
             @Override
             public void onPartialResults(List<String> partialResults) {
                 final String result = partialResults.get(0);
@@ -158,35 +159,17 @@ public class HomeActivity extends BaseActivity
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            if (partialResultsTextView != null) {
-                                partialResultsTextView.setText(result);
-                            }
+                            chatMessage.setId(122);//dummy
+                            chatMessage.setMessage(result);
+                            chatMessage.setDate(DateFormat.getDateTimeInstance().format(new Date()));
+                            chatMessage.setMe(true);
+
+                            displayMessage(chatMessage);
                         }
                     });
                 }
             }
         });
-
-        aiButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String messageText = messageET.getText().toString();
-                if (TextUtils.isEmpty(messageText)) {
-                    return;
-                }
-
-                ChatMessage chatMessage = new ChatMessage();
-                chatMessage.setId(122);//dummy
-                chatMessage.setMessage(messageText);
-                chatMessage.setDate(DateFormat.getDateTimeInstance().format(new Date()));
-                chatMessage.setMe(true);
-
-                messageET.setText("");
-
-                displayMessage(chatMessage);
-            }
-        });
-
 
         /*final AIContext aiContext = new AIContext("CarRental");
         final Map<String, String> maps = new HashMap<>(1);
@@ -294,7 +277,7 @@ public class HomeActivity extends BaseActivity
 
                 Log.i(TAG, "Action: " + result.getAction());
                 final String speech = result.getFulfillment().getSpeech();
-                resultTextView.setText(speech);
+                //resultTextView.setText(speech);
                 Log.i(TAG, "Speech: " + speech);
 
                 ChatMessage chatMessage = new ChatMessage();
