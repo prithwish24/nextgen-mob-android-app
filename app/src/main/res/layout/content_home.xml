@@ -43,8 +43,6 @@
 
         android:layout_alignParentTop="false"
 
-        android:layout_below="@+id/meLbl"
-
         android:layout_marginBottom="20dp"
 
         android:layout_marginTop="10dp"
@@ -55,35 +53,6 @@
 
         android:transcriptMode="alwaysScroll" />
 
-    <TextView
-
-        android:id="@+id/meLbl"
-
-        android:layout_width="wrap_content"
-
-        android:layout_height="wrap_content"
-
-        android:layout_gravity="left|center_vertical"
-
-        android:singleLine="false"
-
-        android:text="MySelf"
-
-        android:textSize="20dp" />
-
-    <TextView
-
-        android:id="@+id/friendLabel"
-
-        android:layout_width="wrap_content"
-
-        android:layout_height="wrap_content"
-
-        android:layout_alignParentRight="true"
-
-        android:text="Friend"
-
-        android:textSize="20dp" />
 
 
 </android.support.constraint.ConstraintLayout>

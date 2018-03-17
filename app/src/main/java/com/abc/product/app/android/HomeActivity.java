@@ -1,8 +1,6 @@
 package com.abc.product.app.android;
 
 import android.Manifest;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Address;
@@ -11,11 +9,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -23,7 +18,6 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,24 +27,17 @@ import com.abc.product.app.adapter.ChatAdapter;
 import com.abc.product.app.ai.Config;
 import com.abc.product.app.model.ChatMessage;
 import com.abc.product.app.util.GPSTracker;
-import com.abc.product.app.util.SessionManager;
 import com.abc.product.app.util.TTS;
 import com.google.gson.Gson;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import ai.api.AIListener;
 import ai.api.PartialResultsListener;
-import ai.api.RequestExtras;
 import ai.api.android.AIConfiguration;
 import ai.api.android.GsonFactory;
-import ai.api.model.AIContext;
 import ai.api.model.AIError;
 import ai.api.model.AIResponse;
 import ai.api.model.Result;
@@ -76,6 +63,8 @@ public class HomeActivity extends BaseActivity
     private ArrayList<ChatMessage> chatHistory;
     private ListView messagesContainer;
     private ChatAdapter adapter;
+    private String totalText = "";
+    private String dateMe = "";
 
     public HomeActivity() {
         handler = new Handler(Looper.getMainLooper());
@@ -151,7 +140,6 @@ public class HomeActivity extends BaseActivity
         //resultTextView.setText(START_SPEECH);
 
         aiButton.setPartialResultsListener(new PartialResultsListener() {
-            ChatMessage chatMessage = new ChatMessage();
             @Override
             public void onPartialResults(List<String> partialResults) {
                 final String result = partialResults.get(0);
@@ -159,17 +147,17 @@ public class HomeActivity extends BaseActivity
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            chatMessage.setId(122);//dummy
-                            chatMessage.setMessage(result);
-                            chatMessage.setDate(DateFormat.getDateTimeInstance().format(new Date()));
-                            chatMessage.setMe(true);
-
-                            displayMessage(chatMessage);
+                            totalText=result;
+                            dateMe = DateFormat.getDateTimeInstance().format(new Date());
                         }
                     });
                 }
             }
         });
+
+
+
+
 
         /*final AIContext aiContext = new AIContext("CarRental");
         final Map<String, String> maps = new HashMap<>(1);
@@ -280,13 +268,22 @@ public class HomeActivity extends BaseActivity
                 //resultTextView.setText(speech);
                 Log.i(TAG, "Speech: " + speech);
 
-                ChatMessage chatMessage = new ChatMessage();
-                chatMessage.setId(122);//dummy
-                chatMessage.setMessage(speech);
-                chatMessage.setDate(DateFormat.getDateTimeInstance().format(new Date()));
-                chatMessage.setMe(false);
+                ChatMessage chatMessageMe = new ChatMessage();
+                chatMessageMe.setMessage(totalText);
+                chatMessageMe.setDate(dateMe);
+                chatMessageMe.setMe(true);
+                displayMessage(chatMessageMe);
 
-                displayMessage(chatMessage);
+                totalText="";
+                dateMe="";
+
+                ChatMessage chatMessageBot = new ChatMessage();
+                chatMessageBot.setId(122);//dummy
+                chatMessageBot.setMessage(speech);
+                chatMessageBot.setDate(DateFormat.getDateTimeInstance().format(new Date()));
+                chatMessageBot.setMe(false);
+
+                displayMessage(chatMessageBot);
                 TTS.speak(speech);
             }
         });
