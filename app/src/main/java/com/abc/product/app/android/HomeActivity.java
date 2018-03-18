@@ -5,9 +5,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Address;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -25,20 +27,31 @@ import android.widget.Toast;
 import com.abc.R;
 import com.abc.product.app.adapter.ChatAdapter;
 import com.abc.product.app.ai.Config;
+import com.abc.product.app.bo.BaseResponse;
+import com.abc.product.app.bo.ZipCodeResponse;
 import com.abc.product.app.model.ChatMessage;
+import com.abc.product.app.service.RestClient;
 import com.abc.product.app.util.GPSTracker;
 import com.abc.product.app.util.TTS;
 import com.google.gson.Gson;
+
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
+import ai.api.AIServiceException;
 import ai.api.PartialResultsListener;
 import ai.api.android.AIConfiguration;
 import ai.api.android.GsonFactory;
 import ai.api.model.AIError;
+import ai.api.model.AIOutputContext;
+import ai.api.model.AIRequest;
 import ai.api.model.AIResponse;
 import ai.api.model.Result;
 import ai.api.model.Status;
@@ -48,7 +61,8 @@ public class HomeActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         AIButton.AIButtonListener {
     public static final String TAG = HomeActivity.class.getName();
-    public static final String START_SPEECH = "Hi! how may I help you ?";
+    public static final String START_SPEECH = "Hi";
+    public static final String initialUrl = "http://18.216.162.214:8002/zipcode/{sessionId}?zipcode={zipCode}";
 
     private DrawerLayout drawerLayout;
     private ActionBarDrawerToggle drawerToggle;
@@ -92,6 +106,8 @@ public class HomeActivity extends BaseActivity
 
         showUserDetailsOnDrawer(this);
 
+        resolveCurrentGPSLocation();
+
         requestAppPermissions(new String[] {
                     Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
                     Manifest.permission.BLUETOOTH, Manifest.permission.RECORD_AUDIO,
@@ -99,14 +115,13 @@ public class HomeActivity extends BaseActivity
                 },
                 R.string.permission_rationale_text, this.getTaskId());
 
-        resolveCurrentGPSLocation();
         adapter = new ChatAdapter(HomeActivity.this, new ArrayList<ChatMessage>());
         messagesContainer.setAdapter(adapter);
 
     }
 
     @Override
-    public void onPermissionsGranted(int requestCode) {
+    public void onPermissionsGranted(int requestCode)  {
         Toast.makeText(this, "Permissions Received.", Toast.LENGTH_LONG).show();
 
         aiButton = findViewById(R.id.micButton);
@@ -155,10 +170,7 @@ public class HomeActivity extends BaseActivity
             }
         });
 
-
-
-
-
+        new GetSessionIdTask().doInBackground(null);
         /*final AIContext aiContext = new AIContext("CarRental");
         final Map<String, String> maps = new HashMap<>(1);
         maps.put("zipcode", curentLocationAddress.getPostalCode());
@@ -272,7 +284,9 @@ public class HomeActivity extends BaseActivity
                 chatMessageMe.setMessage(totalText);
                 chatMessageMe.setDate(dateMe);
                 chatMessageMe.setMe(true);
-                displayMessage(chatMessageMe);
+                if (!StringUtils.isEmpty(totalText)) {
+                    displayMessage(chatMessageMe);
+                }
 
                 totalText="";
                 dateMe="";
@@ -314,6 +328,41 @@ public class HomeActivity extends BaseActivity
                 resultTextView.setText("Action Cancelled !");
             }
         });
+    }
+
+    private class GetSessionIdTask extends AsyncTask{
+
+        @Override
+        protected Object doInBackground(Object[] objects) {
+            StrictMode.ThreadPolicy policy =
+                    new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+            AIRequest firstRequest = new AIRequest();
+            firstRequest.setQuery(START_SPEECH);
+            AIResponse response = null;
+            try {
+                response = aiButton.getAIService().textRequest(firstRequest);
+                MultiValueMap<String,String> parameters = new LinkedMultiValueMap<>();
+                String sessionid = "";
+                for(AIOutputContext a : response.getResult().getContexts()){
+                    if(a.getName().equals("carrental")){
+                        sessionid = a.getParameters().get("sessionId").getAsString();
+                    }
+                }
+                parameters.add("sessionid", sessionid);
+                parameters.add("zipcode", curentLocationAddress.getPostalCode());
+                try{
+                    RestClient.INSTANCE.getRequest(initialUrl,parameters, ZipCodeResponse.class);
+                }catch (Exception e){
+
+                }
+            } catch (AIServiceException e) {
+                e.printStackTrace();
+            }
+
+            return response;
+        }
+
     }
 
 
