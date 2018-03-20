@@ -1,10 +1,13 @@
 package com.abc.product.app.bo;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 /**
  * Created by Abhishek on 3/18/2018.
  */
 
-public class ZipCodeResponse {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class ZipCodeResponse extends BaseResponse{
     private String id;
     private String name;
     private String description;

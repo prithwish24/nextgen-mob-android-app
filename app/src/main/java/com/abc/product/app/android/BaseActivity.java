@@ -46,6 +46,7 @@ import com.abc.product.app.util.SessionManager;
 import com.abc.product.app.util.TTS;
 
 import ai.api.AIServiceException;
+import ai.api.android.AIDataService;
 
 
 public abstract class BaseActivity extends AppCompatActivity {

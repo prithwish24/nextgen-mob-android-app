@@ -45,6 +45,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import ai.api.AIDataService;
 import ai.api.AIServiceException;
 import ai.api.PartialResultsListener;
 import ai.api.android.AIConfiguration;
@@ -62,7 +63,7 @@ public class HomeActivity extends BaseActivity
         AIButton.AIButtonListener {
     public static final String TAG = HomeActivity.class.getName();
     public static final String START_SPEECH = "Hi";
-    public static final String initialUrl = "http://18.216.162.214:8002/zipcode/{sessionId}?zipcode={zipCode}";
+    public static String initialUrl = "http://18.216.162.14:8002/zipcode/{sessionId}?zipcode={zipCode}";
 
     private DrawerLayout drawerLayout;
     private ActionBarDrawerToggle drawerToggle;
@@ -70,6 +71,7 @@ public class HomeActivity extends BaseActivity
     private Gson gson = GsonFactory.getGson();
 
     private AIButton aiButton;
+    private AIDataService aiDataService;
     private Address curentLocationAddress;
     private TextView resultTextView;
     private TextView partialResultsTextView;
@@ -151,6 +153,8 @@ public class HomeActivity extends BaseActivity
         aiButton.initialize(config);
         aiButton.setResultsListener(this);
 
+        aiDataService = new AIDataService(config);
+
         TTS.speak(START_SPEECH);
         //resultTextView.setText(START_SPEECH);
 
@@ -170,7 +174,14 @@ public class HomeActivity extends BaseActivity
             }
         });
 
-        new GetSessionIdTask().doInBackground(null);
+        StrictMode.ThreadPolicy policy =
+                new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+        AIRequest firstRequest = new AIRequest();
+        firstRequest.setQuery(START_SPEECH);
+        final AIRequest aiRequest = new AIRequest();
+        aiRequest.setQuery("Hello");
+        new GetSessionIdTask().execute(aiRequest);
         /*final AIContext aiContext = new AIContext("CarRental");
         final Map<String, String> maps = new HashMap<>(1);
         maps.put("zipcode", curentLocationAddress.getPostalCode());
@@ -330,41 +341,36 @@ public class HomeActivity extends BaseActivity
         });
     }
 
-    private class GetSessionIdTask extends AsyncTask{
+    private class GetSessionIdTask extends AsyncTask<AIRequest,Void,AIResponse> {
+        @Override
+        protected AIResponse doInBackground(AIRequest... requests) {
+            final AIRequest request = requests[0];
+            try {
+                final AIResponse response = aiButton.getAIService().textRequest(request);
+                return response;
+            } catch (AIServiceException e) {
+            }
+            return null;
+        }
 
         @Override
-        protected Object doInBackground(Object[] objects) {
-            StrictMode.ThreadPolicy policy =
-                    new StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
-            AIRequest firstRequest = new AIRequest();
-            firstRequest.setQuery(START_SPEECH);
-            AIResponse response = null;
-            try {
-                response = aiButton.getAIService().textRequest(firstRequest);
-                MultiValueMap<String,String> parameters = new LinkedMultiValueMap<>();
+        protected void onPostExecute(AIResponse aiResponse) {
+            if (aiResponse != null) {
                 String sessionid = "";
-                for(AIOutputContext a : response.getResult().getContexts()){
-                    if(a.getName().equals("carrental")){
+                for (AIOutputContext a : aiResponse.getResult().getContexts()) {
+                    if (a.getName().equals("carrental")) {
                         sessionid = a.getParameters().get("sessionId").getAsString();
                     }
                 }
-                parameters.add("sessionid", sessionid);
-                parameters.add("zipcode", curentLocationAddress.getPostalCode());
-                try{
-                    RestClient.INSTANCE.getRequest(initialUrl,parameters, ZipCodeResponse.class);
-                }catch (Exception e){
+
+                try {
+                    BaseResponse resp = RestClient.INSTANCE.getRequest(initialUrl, ZipCodeResponse.class,sessionid,"63002");
+                    System.out.println(resp);
+                } catch (Exception e) {
 
                 }
-            } catch (AIServiceException e) {
-                e.printStackTrace();
             }
-
-            return response;
         }
-
     }
-
-
 }
 
