@@ -179,9 +179,8 @@ public class HomeActivity extends BaseActivity
         StrictMode.setThreadPolicy(policy);
         AIRequest firstRequest = new AIRequest();
         firstRequest.setQuery(START_SPEECH);
-        final AIRequest aiRequest = new AIRequest();
-        aiRequest.setQuery("Hello");
-        new GetSessionIdTask().execute(aiRequest);
+        //aiRequest.setQuery("Hello");
+        new GetSessionIdTask().execute(firstRequest);
         /*final AIContext aiContext = new AIContext("CarRental");
         final Map<String, String> maps = new HashMap<>(1);
         maps.put("zipcode", curentLocationAddress.getPostalCode());
@@ -364,7 +363,7 @@ public class HomeActivity extends BaseActivity
                 }
 
                 try {
-                    BaseResponse resp = RestClient.INSTANCE.getRequest(initialUrl, ZipCodeResponse.class,sessionid,"63002");
+                    BaseResponse resp = RestClient.INSTANCE.getRequest(initialUrl, ZipCodeResponse.class,sessionid,"63001");
                     System.out.println(resp);
                 } catch (Exception e) {
 
