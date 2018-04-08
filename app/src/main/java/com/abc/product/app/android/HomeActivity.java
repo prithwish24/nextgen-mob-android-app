@@ -73,7 +73,6 @@ public class HomeActivity extends BaseActivity
     private AIButton aiButton;
     private AIDataService aiDataService;
     private Address curentLocationAddress;
-    private TextView resultTextView;
     private TextView partialResultsTextView;
     private final Handler handler;
     private ArrayList<ChatMessage> chatHistory;
@@ -311,6 +310,7 @@ public class HomeActivity extends BaseActivity
                 TTS.speak(speech);
             }
         });
+        //aiButton.getAIService().startListening();
     }
 
     @Override
@@ -323,7 +323,7 @@ public class HomeActivity extends BaseActivity
                     .setAction("Action", null).show();*/
                 Toast.makeText(getApplicationContext(), error.getMessage(), Toast.LENGTH_LONG).show();
 
-                resultTextView.setText(error.getMessage());
+                //resultTextView.setText(error.getMessage());
             }
         });
     }
@@ -335,7 +335,7 @@ public class HomeActivity extends BaseActivity
             public void run() {
                 Log.d(TAG, "onCancelled");
                 Toast.makeText(getApplicationContext(), "Action Cancelled", Toast.LENGTH_SHORT).show();
-                resultTextView.setText("Action Cancelled !");
+                //resultTextView.setText("Action Cancelled !");
             }
         });
     }
