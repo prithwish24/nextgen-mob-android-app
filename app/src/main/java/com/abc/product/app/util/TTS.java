@@ -18,12 +18,21 @@ package com.abc.product.app.util;
 
 import android.content.Context;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 
-public class TTS {
+import java.util.HashMap;
 
-    private static TextToSpeech textToSpeech;
+import ai.api.ui.AIButton;
 
-    public static void init(final Context context) {
+public class TTS extends UtteranceProgressListener{
+
+    private TextToSpeech textToSpeech;
+    private AIButton aiButton;
+    private HashMap<String,String> params = new HashMap<>();
+
+    public void init(final Context context,final AIButton aiButton) {
+        this.aiButton = aiButton;
+        params.put("utteranceId","1");
         if (textToSpeech == null) {
             textToSpeech = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
                 @Override
@@ -31,10 +40,26 @@ public class TTS {
 
                 }
             });
+            textToSpeech.setOnUtteranceProgressListener(this);
         }
     }
 
-    public static void speak(final String text) {
-        textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+    public void speak(final String text) {
+        textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, params);
+    }
+
+    @Override
+    public void onStart(String utteranceId) {
+        System.out.println();
+    }
+
+    @Override
+    public void onDone(String utteranceId) {
+        aiButton.getAIService().startListening();
+    }
+
+    @Override
+    public void onError(String utteranceId) {
+        System.out.println();
     }
 }

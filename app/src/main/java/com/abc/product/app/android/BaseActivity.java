@@ -66,6 +66,7 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     protected SessionManager sessionManager;
     private SparseIntArray mErrorString;
+    protected TTS tts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,7 +76,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         sessionManager = new SessionManager(getApplicationContext());
 
         app = (AIApplication) getApplication();
-        TTS.init(getApplicationContext());
+        tts = new TTS();
     }
 
     @Override

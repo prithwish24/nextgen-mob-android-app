@@ -35,15 +35,12 @@ import com.abc.product.app.util.GPSTracker;
 import com.abc.product.app.util.TTS;
 import com.google.gson.Gson;
 
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import ai.api.AIDataService;
 import ai.api.AIServiceException;
@@ -66,12 +63,12 @@ public class HomeActivity extends BaseActivity
     public static String initialUrl = "http://18.216.162.14:8002/zipcode/{sessionId}?zipcode={zipCode}";
 
     private DrawerLayout drawerLayout;
+
     private ActionBarDrawerToggle drawerToggle;
 
     private Gson gson = GsonFactory.getGson();
 
     private AIButton aiButton;
-    private AIDataService aiDataService;
     private Address curentLocationAddress;
     private TextView partialResultsTextView;
     private final Handler handler;
@@ -125,7 +122,6 @@ public class HomeActivity extends BaseActivity
     public void onPermissionsGranted(int requestCode)  {
         Toast.makeText(this, "Permissions Received.", Toast.LENGTH_LONG).show();
 
-        aiButton = findViewById(R.id.micButton);
         //resultTextView = findViewById(R.id.resultTextView);
         //partialResultsTextView = findViewById(R.id.partialResultsTextView);
 
@@ -133,6 +129,7 @@ public class HomeActivity extends BaseActivity
         final String accessToken = defaultSharedPreferences.getString("dialogflow_agent_token", "");
         //Toast.makeText(this, key, Toast.LENGTH_SHORT).show();
 
+        aiButton = findViewById(R.id.micButton);
         AIConfiguration config = null;
         if (accessToken != null && !accessToken.trim().isEmpty()) {
             config = new AIConfiguration(
@@ -152,9 +149,9 @@ public class HomeActivity extends BaseActivity
         aiButton.initialize(config);
         aiButton.setResultsListener(this);
 
-        aiDataService = new AIDataService(config);
+        tts.init(getApplicationContext(),aiButton);
 
-        TTS.speak(START_SPEECH);
+        tts.speak(START_SPEECH);
         //resultTextView.setText(START_SPEECH);
 
         aiButton.setPartialResultsListener(new PartialResultsListener() {
@@ -307,10 +304,10 @@ public class HomeActivity extends BaseActivity
                 chatMessageBot.setMe(false);
 
                 displayMessage(chatMessageBot);
-                TTS.speak(speech);
+                tts.speak(speech);
+                aiButton.getAIService().startListening();
             }
         });
-        //aiButton.getAIService().startListening();
     }
 
     @Override
