@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
+import android.speech.tts.TextToSpeech;
 import android.text.TextUtils;
 import android.util.Log;
 import android.support.design.widget.NavigationView;
@@ -60,10 +61,10 @@ import ai.api.ui.AIButton;
 
 public class HomeActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener,
-        AIButton.AIButtonListener {
+        AIButton.AIButtonListener , TextToSpeech.OnUtteranceCompletedListener{
     public static final String TAG = HomeActivity.class.getName();
     public static final String START_SPEECH = "Hi";
-    public static String initialUrl = "http://18.216.162.14:8002/zipcode/{sessionId}?zipcode={zipCode}";
+    public static String initialUrl = "http://18.188.162.146:8002/zipcode/{sessionId}?zipcode={zipCode}";
 
     private DrawerLayout drawerLayout;
     private ActionBarDrawerToggle drawerToggle;
@@ -370,6 +371,11 @@ public class HomeActivity extends BaseActivity
                 }
             }
         }
+    }
+
+    @Override
+    public void onUtteranceCompleted(String utteranceId) {
+        aiButton.getAIService().startListening();
     }
 }
 

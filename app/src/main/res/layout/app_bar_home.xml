@@ -20,7 +20,7 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <include layout="@layout/content_home" />
+    <!--<include layout="@layout/content_home" />-->
 
     <RelativeLayout
         android:id="@+id/bottom_container"
@@ -28,6 +28,20 @@
         android:layout_height="200dp"
         android:layout_gravity="bottom|end"
         android:layout_alignParentBottom="true">
+
+        <ListView
+
+            android:id="@+id/messagesContainer"
+            android:layout_width="match_parent"
+            android:layout_height="0dip"
+            android:layout_alignParentLeft="false"
+            android:layout_alignParentTop="false"
+            android:layout_marginBottom="20dp"
+            android:layout_marginTop="10dp"
+            android:divider="@null"
+            android:listSelector="@android:color/transparent"
+            android:transcriptMode="alwaysScroll"
+            />
 
         <ai.api.ui.AIButton
             android:id="@+id/micButton"
