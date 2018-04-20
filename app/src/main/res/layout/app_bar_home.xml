@@ -20,7 +20,7 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <!--<include layout="@layout/content_home" />-->
+    <!--<inclshow_reviewyoushow_reviewyout/content_home" />-->
 
     <RelativeLayout
         android:id="@+id/bottom_container"

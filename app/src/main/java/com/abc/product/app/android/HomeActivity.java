@@ -44,6 +44,7 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 import ai.api.AIDataService;
@@ -289,6 +290,18 @@ public class HomeActivity extends BaseActivity
                 final String speech = result.getFulfillment().getSpeech();
                 //resultTextView.setText(speech);
                 Log.i(TAG, "Speech: " + speech);
+
+                ListIterator listIterator = result.getContexts().listIterator();
+                while(listIterator.hasNext()){
+                    AIOutputContext context = (AIOutputContext) listIterator.next();
+                    if(context.getName().equals("carrental")){
+                        if(context.getParameters().get("review").getAsBoolean()){
+                            Intent intent = new Intent(context,ShowReviewPageActivity.class);
+                            intent.putExtra("data", context);
+                            startActivity(intent);
+                        }
+                    }
+                }
 
                 ChatMessage chatMessageMe = new ChatMessage();
                 chatMessageMe.setMessage(totalText);
