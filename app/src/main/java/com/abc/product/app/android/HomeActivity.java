@@ -61,7 +61,7 @@ import ai.api.ui.AIButton;
 
 public class HomeActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener,
-        AIButton.AIButtonListener , TextToSpeech.OnUtteranceCompletedListener{
+        AIButton.AIButtonListener {
     public static final String TAG = HomeActivity.class.getName();
     public static final String START_SPEECH = "Hi";
     public static String initialUrl = "http://18.188.162.146:8002/zipcode/{sessionId}?zipcode={zipCode}";
@@ -371,11 +371,6 @@ public class HomeActivity extends BaseActivity
                 }
             }
         }
-    }
-
-    @Override
-    public void onUtteranceCompleted(String utteranceId) {
-        aiButton.getAIService().startListening();
     }
 }
 
