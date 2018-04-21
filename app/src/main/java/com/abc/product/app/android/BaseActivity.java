@@ -45,6 +45,9 @@ import com.abc.product.app.ai.AIApplication;
 import com.abc.product.app.util.SessionManager;
 import com.abc.product.app.util.TTS;
 
+import ai.api.AIServiceException;
+import ai.api.android.AIDataService;
+
 
 public abstract class BaseActivity extends AppCompatActivity {
 
@@ -148,7 +151,11 @@ public abstract class BaseActivity extends AppCompatActivity {
             permissionCheck = permissionCheck + permission;
         }
         if ((grantResults.length > 0) && permissionCheck == PackageManager.PERMISSION_GRANTED) {
-            onPermissionsGranted(requestCode);
+            try {
+                onPermissionsGranted(requestCode);
+            } catch (AIServiceException e) {
+                e.printStackTrace();
+            }
         } else {
             Snackbar.make(findViewById(android.R.id.content), mErrorString.get(requestCode),
                     Snackbar.LENGTH_INDEFINITE).setAction("ENABLE",
@@ -191,10 +198,14 @@ public abstract class BaseActivity extends AppCompatActivity {
                 ActivityCompat.requestPermissions(this, requestedPermissions, requestCode);
             }
         } else {
-            onPermissionsGranted(requestCode);
+            try {
+                onPermissionsGranted(requestCode);
+            } catch (AIServiceException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    public abstract void onPermissionsGranted(int requestCode);
+    public abstract void onPermissionsGranted(int requestCode) throws AIServiceException;
 
 }

@@ -8,28 +8,28 @@
     tools:context=".product.app.android.HomeActivity"
     tools:showIn="@layout/app_bar_home">
 
-    <TextView
-        android:id="@+id/partialResultsTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:layout_marginBottom="15dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
-        android:gravity="center" />
+    <ListView
 
-    <TextView
+        android:id="@+id/messagesContainer"
+
         android:layout_width="match_parent"
+
         android:layout_height="match_parent"
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
-        android:id="@+id/resultTextView"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:layout_below="@+id/partialResultsTextView"
-        android:text="Some sample text"/>
+
+        android:layout_alignParentLeft="false"
+
+        android:layout_alignParentTop="false"
+
+        android:layout_marginBottom="20dp"
+
+        android:layout_marginTop="10dp"
+
+        android:divider="@null"
+
+        android:listSelector="@android:color/transparent"
+
+        android:transcriptMode="alwaysScroll" />
+
 
 
 </android.support.constraint.ConstraintLayout>

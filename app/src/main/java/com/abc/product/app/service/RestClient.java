@@ -3,6 +3,8 @@ package com.abc.product.app.service;
 import android.util.Log;
 
 import com.abc.product.app.bo.BaseResponse;
+import com.abc.product.app.bo.ZipCodeResponse;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.http.HttpEntity;
@@ -45,6 +47,7 @@ public enum RestClient {
         });
 
         mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,false);
     }
 
     private BaseResponse makeRequestWithFormData(String url, MultiValueMap<String, String> formData, HttpMethod method) {
@@ -57,15 +60,25 @@ public enum RestClient {
         return response.getBody();
     }
 
+    private ZipCodeResponse makeGetRequest(String url, Object... urlVariables) {
+        Log.d(TAG,"In RestClient.makeRequestWithFormData ::");
+        HttpHeaders requestHeaders = new HttpHeaders();
+        requestHeaders.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+        //requestHeaders.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<MultiValueMap> httpEntity = new HttpEntity<>(requestHeaders);
+        ResponseEntity<ZipCodeResponse> response = restTemplate.exchange(url, HttpMethod.GET, httpEntity, ZipCodeResponse.class, urlVariables);
+        return response.getBody();
+    }
 
-    public <T> BaseResponse<T> getRequest(String url, MultiValueMap<String, String> formData, Class<T> clazz) throws IOException {
+
+    public <T> BaseResponse<T> getRequest(String url, Class<T> clazz,Object... urlVariables) throws IOException {
         Log.d(TAG,"In RestServiceClient.getRequestForm ::");
-        BaseResponse br = makeRequestWithFormData (url, formData, HttpMethod.GET);
-        if (br.isSuccess()) {
-            String temp = mapper.writeValueAsString(br.getResponse());
-            T type = mapper.readValue(temp, clazz);
-            br.setResponse(type);
-        }
+        ZipCodeResponse br = makeGetRequest (url, urlVariables);
+//        if (br.isSuccess()) {
+//            String temp = mapper.writeValueAsString(br.getResponse());
+//            T type = mapper.readValue(temp, clazz);
+//            br.setResponse(type);
+//        }
         return br;
     }
     public <T> BaseResponse<T>  postRequest(String url, MultiValueMap<String, String> formData, Class<T> clazz) throws IOException {

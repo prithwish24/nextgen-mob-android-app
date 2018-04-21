@@ -1,21 +1,18 @@
 package com.abc.product.app.android;
 
 import android.Manifest;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Address;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.StrictMode;
 import android.preference.PreferenceManager;
-import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -23,29 +20,39 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.abc.R;
+import com.abc.product.app.adapter.ChatAdapter;
 import com.abc.product.app.ai.Config;
+import com.abc.product.app.bo.BaseResponse;
+import com.abc.product.app.bo.ZipCodeResponse;
+import com.abc.product.app.model.ChatMessage;
+import com.abc.product.app.service.RestClient;
 import com.abc.product.app.util.GPSTracker;
-import com.abc.product.app.util.SessionManager;
 import com.abc.product.app.util.TTS;
 import com.google.gson.Gson;
 
-import java.util.Collections;
-import java.util.HashMap;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
+
+import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import ai.api.AIListener;
+import ai.api.AIDataService;
+import ai.api.AIServiceException;
 import ai.api.PartialResultsListener;
-import ai.api.RequestExtras;
 import ai.api.android.AIConfiguration;
 import ai.api.android.GsonFactory;
-import ai.api.model.AIContext;
 import ai.api.model.AIError;
+import ai.api.model.AIOutputContext;
+import ai.api.model.AIRequest;
 import ai.api.model.AIResponse;
 import ai.api.model.Result;
 import ai.api.model.Status;
@@ -55,7 +62,8 @@ public class HomeActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         AIButton.AIButtonListener {
     public static final String TAG = HomeActivity.class.getName();
-    public static final String START_SPEECH = "Hi! how may I help you ?";
+    public static final String START_SPEECH = "Hi";
+    public static String initialUrl = "http://18.216.162.14:8002/zipcode/{sessionId}?zipcode={zipCode}";
 
     private DrawerLayout drawerLayout;
     private ActionBarDrawerToggle drawerToggle;
@@ -63,10 +71,15 @@ public class HomeActivity extends BaseActivity
     private Gson gson = GsonFactory.getGson();
 
     private AIButton aiButton;
+    private AIDataService aiDataService;
     private Address curentLocationAddress;
-    private TextView resultTextView;
     private TextView partialResultsTextView;
     private final Handler handler;
+    private ArrayList<ChatMessage> chatHistory;
+    private ListView messagesContainer;
+    private ChatAdapter adapter;
+    private String totalText = "";
+    private String dateMe = "";
 
     public HomeActivity() {
         handler = new Handler(Looper.getMainLooper());
@@ -78,6 +91,8 @@ public class HomeActivity extends BaseActivity
         setContentView(R.layout.activity_home);
 
         sessionManager.checkLogin();
+
+        messagesContainer = (ListView) findViewById(R.id.messagesContainer);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -92,6 +107,8 @@ public class HomeActivity extends BaseActivity
 
         showUserDetailsOnDrawer(this);
 
+        resolveCurrentGPSLocation();
+
         requestAppPermissions(new String[] {
                     Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
                     Manifest.permission.BLUETOOTH, Manifest.permission.RECORD_AUDIO,
@@ -99,17 +116,18 @@ public class HomeActivity extends BaseActivity
                 },
                 R.string.permission_rationale_text, this.getTaskId());
 
-        resolveCurrentGPSLocation();
+        adapter = new ChatAdapter(HomeActivity.this, new ArrayList<ChatMessage>());
+        messagesContainer.setAdapter(adapter);
 
     }
 
     @Override
-    public void onPermissionsGranted(int requestCode) {
+    public void onPermissionsGranted(int requestCode)  {
         Toast.makeText(this, "Permissions Received.", Toast.LENGTH_LONG).show();
 
         aiButton = findViewById(R.id.micButton);
-        resultTextView = findViewById(R.id.resultTextView);
-        partialResultsTextView = findViewById(R.id.partialResultsTextView);
+        //resultTextView = findViewById(R.id.resultTextView);
+        //partialResultsTextView = findViewById(R.id.partialResultsTextView);
 
         final SharedPreferences defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         final String accessToken = defaultSharedPreferences.getString("dialogflow_agent_token", "");
@@ -134,8 +152,10 @@ public class HomeActivity extends BaseActivity
         aiButton.initialize(config);
         aiButton.setResultsListener(this);
 
+        aiDataService = new AIDataService(config);
+
         TTS.speak(START_SPEECH);
-        resultTextView.setText(START_SPEECH);
+        //resultTextView.setText(START_SPEECH);
 
         aiButton.setPartialResultsListener(new PartialResultsListener() {
             @Override
@@ -145,16 +165,21 @@ public class HomeActivity extends BaseActivity
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            if (partialResultsTextView != null) {
-                                partialResultsTextView.setText(result);
-                            }
+                            totalText=result;
+                            dateMe = DateFormat.getDateTimeInstance().format(new Date());
                         }
                     });
                 }
             }
         });
 
-
+        StrictMode.ThreadPolicy policy =
+                new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+        AIRequest firstRequest = new AIRequest();
+        firstRequest.setQuery(START_SPEECH);
+        //aiRequest.setQuery("Hello");
+        new GetSessionIdTask().execute(firstRequest);
         /*final AIContext aiContext = new AIContext("CarRental");
         final Map<String, String> maps = new HashMap<>(1);
         maps.put("zipcode", curentLocationAddress.getPostalCode());
@@ -162,6 +187,12 @@ public class HomeActivity extends BaseActivity
         final List<AIContext> contexts = Collections.singletonList(aiContext);
         final RequestExtras requestExtras = new RequestExtras(contexts, null);
         aiButton.startListening(requestExtras);*/
+    }
+
+    public void displayMessage(ChatMessage message) {
+        adapter.add(message);
+        adapter.notifyDataSetChanged();
+        messagesContainer.setSelection(messagesContainer.getCount() - 1);
     }
 
 
@@ -243,7 +274,7 @@ public class HomeActivity extends BaseActivity
                 Log.i(TAG, "onResult");
                 Log.i(TAG, "Received success response");
 
-                resultTextView.setText(gson.toJson(response));
+                //resultTextView.setText(gson.toJson(response));
 
                 // this is example how to get different parts of result object
                 final Status status = response.getStatus();
@@ -255,10 +286,31 @@ public class HomeActivity extends BaseActivity
 
                 Log.i(TAG, "Action: " + result.getAction());
                 final String speech = result.getFulfillment().getSpeech();
+                //resultTextView.setText(speech);
                 Log.i(TAG, "Speech: " + speech);
+
+                ChatMessage chatMessageMe = new ChatMessage();
+                chatMessageMe.setMessage(totalText);
+                chatMessageMe.setDate(dateMe);
+                chatMessageMe.setMe(true);
+                if (!StringUtils.isEmpty(totalText)) {
+                    displayMessage(chatMessageMe);
+                }
+
+                totalText="";
+                dateMe="";
+
+                ChatMessage chatMessageBot = new ChatMessage();
+                chatMessageBot.setId(122);//dummy
+                chatMessageBot.setMessage(speech);
+                chatMessageBot.setDate(DateFormat.getDateTimeInstance().format(new Date()));
+                chatMessageBot.setMe(false);
+
+                displayMessage(chatMessageBot);
                 TTS.speak(speech);
             }
         });
+        //aiButton.getAIService().startListening();
     }
 
     @Override
@@ -271,7 +323,7 @@ public class HomeActivity extends BaseActivity
                     .setAction("Action", null).show();*/
                 Toast.makeText(getApplicationContext(), error.getMessage(), Toast.LENGTH_LONG).show();
 
-                resultTextView.setText(error.getMessage());
+                //resultTextView.setText(error.getMessage());
             }
         });
     }
@@ -283,11 +335,41 @@ public class HomeActivity extends BaseActivity
             public void run() {
                 Log.d(TAG, "onCancelled");
                 Toast.makeText(getApplicationContext(), "Action Cancelled", Toast.LENGTH_SHORT).show();
-                resultTextView.setText("Action Cancelled !");
+                //resultTextView.setText("Action Cancelled !");
             }
         });
     }
 
+    private class GetSessionIdTask extends AsyncTask<AIRequest,Void,AIResponse> {
+        @Override
+        protected AIResponse doInBackground(AIRequest... requests) {
+            final AIRequest request = requests[0];
+            try {
+                final AIResponse response = aiButton.getAIService().textRequest(request);
+                return response;
+            } catch (AIServiceException e) {
+            }
+            return null;
+        }
 
+        @Override
+        protected void onPostExecute(AIResponse aiResponse) {
+            if (aiResponse != null) {
+                String sessionid = "";
+                for (AIOutputContext a : aiResponse.getResult().getContexts()) {
+                    if (a.getName().equals("carrental")) {
+                        sessionid = a.getParameters().get("sessionId").getAsString();
+                    }
+                }
+
+                try {
+                    BaseResponse resp = RestClient.INSTANCE.getRequest(initialUrl, ZipCodeResponse.class,sessionid,"63001");
+                    System.out.println(resp);
+                } catch (Exception e) {
+
+                }
+            }
+        }
+    }
 }
 
