@@ -47,6 +47,9 @@
         <activity
             android:name=".product.app.android.SettingsActivity"
             android:label="@string/title_activity_settings"></activity>
+        <activity
+            android:name=".product.app.android.ShowReviewPageActivity"
+            android:label="Review"></activity>
     </application>
 
 </manifest>

@@ -9,6 +9,8 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
@@ -30,11 +32,13 @@ import com.abc.product.app.adapter.ChatAdapter;
 import com.abc.product.app.ai.Config;
 import com.abc.product.app.bo.BaseResponse;
 import com.abc.product.app.bo.ZipCodeResponse;
+import com.abc.product.app.context.MyContext;
 import com.abc.product.app.model.ChatMessage;
 import com.abc.product.app.service.RestClient;
 import com.abc.product.app.util.GPSTracker;
 import com.abc.product.app.util.TTS;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -43,6 +47,7 @@ import org.springframework.util.StringUtils;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -65,7 +70,7 @@ public class HomeActivity extends BaseActivity
         AIButton.AIButtonListener {
     public static final String TAG = HomeActivity.class.getName();
     public static final String START_SPEECH = "Hi";
-    public static String initialUrl = "http://18.188.162.146:8002/zipcode/{sessionId}?zipcode={zipCode}";
+    public static String initialUrl = "http://18.188.102.146:8002/zipcode/{sessionId}?zipcode={zipCode}";
 
     private DrawerLayout drawerLayout;
     private ActionBarDrawerToggle drawerToggle;
@@ -303,25 +308,45 @@ public class HomeActivity extends BaseActivity
                     }
                 }
 
-                ChatMessage chatMessageMe = new ChatMessage();
-                chatMessageMe.setMessage(totalText);
-                chatMessageMe.setDate(dateMe);
-                chatMessageMe.setMe(true);
-                if (!StringUtils.isEmpty(totalText)) {
-                    displayMessage(chatMessageMe);
+                ListIterator listIterator = result.getContexts().listIterator();
+                while(listIterator.hasNext()){
+                    AIOutputContext context = (AIOutputContext) listIterator.next();
+                    if(context.getName().equals("carrental")){
+                        if(context.getParameters().get("review")!=null && context.getParameters().get("review").getAsBoolean()){
+                            Intent intent = new Intent(HomeActivity.this,ShowReviewPageActivity.class);
+                            Map<String,JsonElement> parameters  = context.getParameters();
+                            HashMap<String,String> data = new HashMap<>();
+                            data.put("Location",parameters.get("pickuplocation").getAsJsonPrimitive().getAsString());
+                            data.put("Date",parameters.get("pickupdate").getAsString());
+                            data.put("Days",parameters.get("duration").getAsJsonObject().get("amount").getAsString());
+                            data.put("Car",parameters.get("cartype").getAsJsonArray().get(0).getAsString());
+                            intent.putExtra("data", data);
+                            startActivity(intent);
+                        }else{
+                            ChatMessage chatMessageMe = new ChatMessage();
+                            chatMessageMe.setMessage(totalText);
+                            chatMessageMe.setDate(dateMe);
+                            chatMessageMe.setMe(true);
+                            if (!StringUtils.isEmpty(totalText)) {
+                                displayMessage(chatMessageMe);
+                            }
+
+                            totalText="";
+                            dateMe="";
+
+                            ChatMessage chatMessageBot = new ChatMessage();
+                            chatMessageBot.setId(122);//dummy
+                            chatMessageBot.setMessage(speech);
+                            chatMessageBot.setDate(DateFormat.getDateTimeInstance().format(new Date()));
+                            chatMessageBot.setMe(false);
+
+                            displayMessage(chatMessageBot);
+                            TTS.speak(speech);
+                        }
+                    }
                 }
 
-                totalText="";
-                dateMe="";
 
-                ChatMessage chatMessageBot = new ChatMessage();
-                chatMessageBot.setId(122);//dummy
-                chatMessageBot.setMessage(speech);
-                chatMessageBot.setDate(DateFormat.getDateTimeInstance().format(new Date()));
-                chatMessageBot.setMe(false);
-
-                displayMessage(chatMessageBot);
-                TTS.speak(speech);
             }
         });
         //aiButton.getAIService().startListening();
@@ -359,6 +384,7 @@ public class HomeActivity extends BaseActivity
         protected AIResponse doInBackground(AIRequest... requests) {
             final AIRequest request = requests[0];
             try {
+                aiButton.getAIService().resetContexts();
                 final AIResponse response = aiButton.getAIService().textRequest(request);
                 return response;
             } catch (AIServiceException e) {
