@@ -300,18 +300,6 @@ public class HomeActivity extends BaseActivity
                 while(listIterator.hasNext()){
                     AIOutputContext context = (AIOutputContext) listIterator.next();
                     if(context.getName().equals("carrental")){
-                        if(context.getParameters().get("review").getAsBoolean()){
-                            Intent intent = new Intent(context,ShowReviewPageActivity.class);
-                            intent.putExtra("data", context);
-                            startActivity(intent);
-                        }
-                    }
-                }
-
-                ListIterator listIterator = result.getContexts().listIterator();
-                while(listIterator.hasNext()){
-                    AIOutputContext context = (AIOutputContext) listIterator.next();
-                    if(context.getName().equals("carrental")){
                         if(context.getParameters().get("review")!=null && context.getParameters().get("review").getAsBoolean()){
                             Intent intent = new Intent(HomeActivity.this,ShowReviewPageActivity.class);
                             Map<String,JsonElement> parameters  = context.getParameters();
